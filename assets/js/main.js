@@ -45,18 +45,6 @@
 
   /* ---------- header ---------- */
   var header =
-    '<div class="topbar"><div class="wrap">' +
-      '<div class="topbar__info">' +
-        '<a href="' + tel(SITE.phones[0]) + '"><i data-lucide="phone"></i>' + SITE.phones[0] + "</a>" +
-        '<a href="mailto:' + SITE.emails[0] + '"><i data-lucide="mail"></i>' + SITE.emails[0] + "</a>" +
-        '<span class="hide-sm"><i data-lucide="map-pin"></i>' + SITE.address + "</span>" +
-      "</div>" +
-      '<div class="topbar__social"><span><i data-lucide="clock"></i>' + SITE.hours + "</span>" +
-        '<a href="' + SITE.social.facebook + '" aria-label="Facebook"><i data-lucide="facebook"></i></a>' +
-        '<a href="' + SITE.social.instagram + '" aria-label="Instagram"><i data-lucide="instagram"></i></a>' +
-        '<a href="' + SITE.social.linkedin + '" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>' +
-      "</div>" +
-    "</div></div>" +
     '<header class="header" id="header"><div class="wrap">' +
       '<a class="brand" href="index.html" aria-label="EMARCON home"><img src="assets/img/logo-dark.png" alt="EMARCON Contracting L.L.C" width="520" height="205"></a>' +
       '<nav aria-label="Main"><ul class="nav">' +
@@ -275,6 +263,15 @@
   });
   function fallbackCopy(t) { var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (er) {} ta.remove(); }
 
+  /* ---------- single-row auto sliders on mobile ---------- */
+  document.querySelectorAll("[data-mslide]").forEach(function (track) {
+    var vp = document.createElement("div"); vp.className = "mslide";
+    track.parentNode.insertBefore(vp, track); vp.appendChild(track);
+    Array.prototype.slice.call(track.children).forEach(function (c) {
+      var cl = c.cloneNode(true); cl.classList.add("is-clone"); cl.setAttribute("aria-hidden", "true"); track.appendChild(cl);
+    });
+  });
+
   /* ---------- reveal on scroll ---------- */
   var revealEls = document.querySelectorAll(".reveal, .img-reveal");
   if ("IntersectionObserver" in window) {
@@ -302,13 +299,14 @@
   var dotsWrap = document.querySelector(".hero__dots");
   if (slides.length > 1 && dotsWrap) {
     var heroEl = document.querySelector(".hero");
-    var INTERVAL = 4200, cur = 0, timer;
+    var INTERVAL = 3000, cur = 0, timer;
     var curEl = document.querySelector(".hero__cur"), capEl = document.querySelector(".hero__cap");
     heroEl.style.setProperty("--interval", INTERVAL / 1000 + "s");
     slides.forEach(function (_, i) { var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Slide " + (i + 1)); b.addEventListener("click", function () { go(i); }); dotsWrap.appendChild(b); });
     var dots = dotsWrap.querySelectorAll("button");
     // warm the next images so slides change instantly
-    slides.forEach(function (sl) { var im = sl.querySelector("img"); if (im) im.loading = "eager"; });
+    function preload(n) { for (var k = 1; k <= n; k++) { var im = slides[(cur + k) % slides.length].querySelector("img"); if (im && im.loading === "lazy") im.loading = "eager"; } }
+    window.addEventListener("load", function () { slides.forEach(function (sl, k) { setTimeout(function () { var im = sl.querySelector("img"); if (im) im.loading = "eager"; }, 300 + k * 150); }); });
     function go(i) {
       slides[cur].classList.remove("is-active"); dots[cur].classList.remove("is-active");
       cur = (i + slides.length) % slides.length;
@@ -316,6 +314,7 @@
       slides[cur].classList.add("is-active"); void dots[cur].offsetWidth; dots[cur].classList.add("is-active");
       if (curEl) curEl.textContent = (cur + 1 < 10 ? "0" : "") + (cur + 1);
       if (capEl) { capEl.textContent = slides[cur].getAttribute("data-caption") || ""; capEl.style.animation = "none"; void capEl.offsetWidth; capEl.style.animation = ""; }
+      preload(2);
       clearTimeout(timer); timer = setTimeout(function () { go(cur + 1); }, INTERVAL);
     }
     var pv = document.querySelector(".hero__prev"), nx = document.querySelector(".hero__next");

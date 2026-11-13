@@ -1030,3 +1030,80 @@ section { position: relative; }
   .w3d h3 { font-size: 1.05rem; }
   .w3d p { font-size: .82rem; line-height: 1.5; }
 }
+
+/* =========================================================
+   v3 — separate 3D boxes, mobile single-row sliders
+   ========================================================= */
+.mslide { position: relative; }
+.is-clone { display: none !important; }
+.hero { --interval: 3s; }
+
+/* feature boxes as separate 3D cards */
+.fstrip { background: transparent; box-shadow: none; gap: 1.4rem; perspective: 1000px; }
+.fbox, .fbox + .fbox {
+  border: 1px solid rgba(201,165,91,.25); border-radius: 10px; background: var(--white);
+  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 6px 0 -1px #d9c08a, 0 8px 0 -1px var(--gold-deep), 0 26px 40px -18px rgba(13,24,40,.45);
+  transform: translateZ(0) rotateX(6deg); transform-origin: bottom center;
+  transition: transform .5s var(--ease), box-shadow .5s var(--ease), color .45s;
+}
+.fbox:hover { transform: translateY(-10px) rotateX(0); box-shadow: 0 1px 0 rgba(255,255,255,.1) inset, 0 6px 0 -1px var(--gold-deep), 0 8px 0 -1px #7d5f25, 0 40px 60px -22px rgba(13,24,40,.6); }
+.fbox::before { border-radius: 10px; }
+.fbox::after { border-radius: 0 0 10px 10px; }
+.js .fbox.reveal { transform: translateY(40px) rotateX(25deg); }
+.js .fbox.reveal.is-in { transform: translateZ(0) rotateX(6deg); }
+.js .fbox.reveal.is-in:hover { transform: translateY(-10px) rotateX(0); }
+
+/* about images with depth */
+.media-stack__main { box-shadow: 0 40px 70px -30px rgba(13,24,40,.55), 0 12px 24px -12px rgba(13,24,40,.35); border-radius: 6px; }
+.media-stack__sub { box-shadow: 0 30px 60px -20px rgba(13,24,40,.6); border-radius: 6px; }
+.media-stack__tag { border-radius: 6px; box-shadow: 0 24px 40px -16px rgba(13,24,40,.7); }
+.about-cta { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-top: .6rem; }
+
+/* hero arrows/badge spacing without topbar */
+.hero { min-height: min(860px, calc(100svh - var(--header-h))); }
+
+@media (max-width: 720px) {
+  /* hero buttons in one row */
+  .hero__actions { flex-wrap: nowrap; gap: .6rem; }
+  .hero__actions .btn { flex: 1 1 0; min-width: 0; padding: .85rem .6rem; font-size: .72rem; letter-spacing: .05em; white-space: nowrap; }
+  .hero__actions .btn svg { width: 15px; height: 15px; }
+
+  /* read more + phone in one row */
+  .about-cta { flex-wrap: nowrap; gap: .9rem; }
+  .about-cta .btn { padding: .85rem 1rem; font-size: .75rem; white-space: nowrap; }
+  .about-cta .link-arrow { font-size: .78rem; white-space: nowrap; letter-spacing: .04em; }
+
+  /* generic single-row auto slider */
+  .mslide { overflow: hidden; margin-inline: calc(-1 * max(20px, env(safe-area-inset-left, 0px))); -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .mslide > [data-mslide] { display: flex !important; flex-wrap: nowrap; width: max-content; gap: 1rem; padding: 14px 0 22px; animation: mq-left var(--mspeed, 30s) linear infinite; }
+  .mslide > [data-mslide] > * { margin-right: 0; }
+  .mslide:active > [data-mslide], .mslide:hover > [data-mslide] { animation-play-state: paused; }
+  .mslide .is-clone { display: flex !important; }
+  .mslide .st-card.is-clone, .mslide .fbox.is-clone { display: flex !important; }
+  .mslide .w3d.is-clone { display: block !important; }
+  .js .mslide .reveal { opacity: 1; transform: none; }
+  /* gap trick: half-width translate must include trailing gap */
+  .mslide > [data-mslide] { padding-right: 1rem; }
+
+  .fstrip-sec { margin-top: -60px; }
+  .fstrip { --mspeed: 22s; }
+  .fstrip .fbox, .fstrip .fbox + .fbox { width: 250px; flex: none; flex-direction: row; align-items: flex-start; padding: 1.3rem 1.1rem; border: 1px solid rgba(201,165,91,.25); transform: none; }
+  .js .mslide .fbox.reveal, .js .mslide .fbox.reveal.is-in { transform: none; }
+  .fbox:nth-child(even), .fbox:nth-child(n+3) { border-left: 1px solid rgba(201,165,91,.25); border-top: 1px solid rgba(201,165,91,.25); }
+
+  .st-grid { --mspeed: 26s; }
+  .st-grid .st-card { width: 230px; flex: none; flex-direction: column; }
+  .st-card p { display: block; }
+
+  .why-grid { --mspeed: 34s; }
+  .why-grid .w3d { width: 260px; flex: none; }
+  .w3d__inner { padding: 1.8rem 1.4rem; }
+  .w3d__icon { width: 66px; height: 66px; }
+  .w3d h3 { font-size: 1.15rem; }
+  .w3d p { font-size: .88rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mslide > [data-mslide] { animation: none !important; }
+  .mslide { overflow-x: auto; }
+}
+@media (max-width: 720px) { .hero__arrows { display: none; } }
