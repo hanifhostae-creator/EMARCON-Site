@@ -128,7 +128,9 @@
       '<div class="cta-band__actions reveal" style="--d:.15s"><button class="btn" data-open-quote type="button">Request a Quote <i data-lucide="arrow-right"></i></button>' +
       '<a class="btn btn--ghost" href="' + tel(SITE.phones[0]) + '"><i data-lucide="phone"></i> ' + SITE.phones[0] + "</a></div>" +
     "</div></section>" +
+    '<div class="footer-words" aria-hidden="true"><div class="footer-words__track">' + (function () { var w = ["General Contracting", "Steel Structures", "Interior Fit-Out", "MEP Works", "Facility Maintenance", "Turnkey Villas", "Commercial Buildings", "Industrial Projects", "Duct Manufacturing", "HVAC Trading"]; var h = w.map(function (x) { return "<span>" + x + "</span>"; }).join(""); return h + h; })() + "</div></div>" +
     '<footer class="footer">' +
+      '<span class="footer__bigword" aria-hidden="true">EMARCON</span>' +
       '<div class="footer__top"><div class="wrap"><h3>Subscribe for project updates</h3>' +
         '<form class="newsletter" data-newsletter novalidate><label for="nl-email" class="sr" hidden>Email</label><input id="nl-email" type="email" placeholder="Enter your email address" required><button class="btn" type="submit">Subscribe</button></form>' +
       "</div></div>" +
@@ -155,6 +157,7 @@
           '<li><i data-lucide="clock"></i><span>' + SITE.hours + "</span></li>" +
         "</ul></div>" +
       "</div>" +
+      '<p class="footer__tagline">Building your vision · Dubai · United Arab Emirates</p>' +
       '<div class="footer__bottom"><div class="wrap"><span>Copyright © ' + year + " EMARCON CONTRACTING LLC. All rights reserved.</span>" +
         '<nav><a href="about.html">Company</a><a href="services.html">Services</a><a href="contact.html">Support</a></nav></div></div>' +
     "</footer>" +
@@ -294,20 +297,76 @@
     counters.forEach(function (c) { co.observe(c); });
   }
 
-  /* ---------- hero slider ---------- */
+  /* ---------- hero slider (fast, with counter + arrows) ---------- */
   var slides = document.querySelectorAll(".hero__slide");
   var dotsWrap = document.querySelector(".hero__dots");
   if (slides.length > 1 && dotsWrap) {
-    var cur = 0, timer;
+    var heroEl = document.querySelector(".hero");
+    var INTERVAL = 4200, cur = 0, timer;
+    var curEl = document.querySelector(".hero__cur"), capEl = document.querySelector(".hero__cap");
+    heroEl.style.setProperty("--interval", INTERVAL / 1000 + "s");
     slides.forEach(function (_, i) { var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Slide " + (i + 1)); b.addEventListener("click", function () { go(i); }); dotsWrap.appendChild(b); });
     var dots = dotsWrap.querySelectorAll("button");
+    // warm the next images so slides change instantly
+    slides.forEach(function (sl) { var im = sl.querySelector("img"); if (im) im.loading = "eager"; });
     function go(i) {
       slides[cur].classList.remove("is-active"); dots[cur].classList.remove("is-active");
       cur = (i + slides.length) % slides.length;
+      var im = slides[cur].querySelector("img"); if (im) { im.style.animation = "none"; void im.offsetWidth; im.style.animation = ""; }
       slides[cur].classList.add("is-active"); void dots[cur].offsetWidth; dots[cur].classList.add("is-active");
-      clearTimeout(timer); timer = setTimeout(function () { go(cur + 1); }, 6000);
+      if (curEl) curEl.textContent = (cur + 1 < 10 ? "0" : "") + (cur + 1);
+      if (capEl) { capEl.textContent = slides[cur].getAttribute("data-caption") || ""; capEl.style.animation = "none"; void capEl.offsetWidth; capEl.style.animation = ""; }
+      clearTimeout(timer); timer = setTimeout(function () { go(cur + 1); }, INTERVAL);
     }
+    var pv = document.querySelector(".hero__prev"), nx = document.querySelector(".hero__next");
+    if (pv) pv.addEventListener("click", function () { go(cur - 1); });
+    if (nx) nx.addEventListener("click", function () { go(cur + 1); });
+    var sx = null;
+    heroEl.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    heroEl.addEventListener("touchend", function (e) { if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1)); sx = null; });
     go(0);
+  }
+
+  /* ---------- button ripple ---------- */
+  document.addEventListener("pointerdown", function (e) {
+    var b = e.target.closest(".btn"); if (!b) return;
+    var r = b.getBoundingClientRect(), d = Math.max(r.width, r.height), sp = document.createElement("span");
+    sp.className = "ripple"; sp.style.width = sp.style.height = d + "px";
+    sp.style.left = (e.clientX - r.left - d / 2) + "px"; sp.style.top = (e.clientY - r.top - d / 2) + "px";
+    b.appendChild(sp); setTimeout(function () { sp.remove(); }, 700);
+  });
+
+  /* ---------- 3D tilt cards ---------- */
+  if (window.matchMedia("(hover: hover)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.querySelectorAll("[data-tilt]").forEach(function (card) {
+      var inner = card.querySelector(".w3d__inner") || card;
+      card.addEventListener("mousemove", function (e) {
+        var r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        inner.style.setProperty("--ry", ((x - .5) * 16).toFixed(2) + "deg");
+        inner.style.setProperty("--rx", ((.5 - y) * 14).toFixed(2) + "deg");
+        inner.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+        inner.style.setProperty("--my", (y * 100).toFixed(1) + "%");
+      });
+      card.addEventListener("mouseleave", function () { inner.style.setProperty("--rx", "0deg"); inner.style.setProperty("--ry", "0deg"); });
+    });
+  }
+
+  /* ---------- background words drift on scroll ---------- */
+  var bgWords = document.querySelectorAll(".bg-word, .footer__bigword");
+  if (bgWords.length && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var tick = false;
+    window.addEventListener("scroll", function () {
+      if (tick) return; tick = true;
+      requestAnimationFrame(function () {
+        bgWords.forEach(function (w) {
+          var r = w.parentElement.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > window.innerHeight) return;
+          var dir = w.classList.contains("bg-word--right") ? 1 : -1;
+          w.style.setProperty("--bgx", (dir * (r.top * 0.12)).toFixed(1) + "px");
+        });
+        tick = false;
+      });
+    }, { passive: true });
   }
 
   /* ---------- project filter ---------- */
